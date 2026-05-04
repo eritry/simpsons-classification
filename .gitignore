@@ -1,0 +1,21 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Local training artifacts
+runs/
+checkpoints/
+label_audit/
+*.pth
+*.pt
+*.ckpt
+
+# Datasets and generated submissions
+data/
+train/
+testset/
+journey-springfield.zip
+sample_submission.csv
+simple_cnn_baseline.csv
+
