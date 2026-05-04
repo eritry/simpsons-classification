@@ -22,6 +22,17 @@ Code modules are loaded from the GitHub repository cloned into:
 ```
 
 The notebook expects the Kaggle archive to be unpacked in Colab into `/content/train` and `/content/testset`.
+The dataset archive is published as a GitHub Release asset:
+
+```text
+https://github.com/eritry/simpsons-classification/releases/tag/dataset-v1
+```
+
+The notebook caches that archive on Google Drive at:
+
+```text
+/content/drive/MyDrive/Colab Notebooks/simpsons/dataset/journey-springfield.zip
+```
 
 Open in Colab:
 
