@@ -15,5 +15,16 @@ All Google Drive artifacts are configured to live under:
 /content/drive/MyDrive/Colab Notebooks/simpsons
 ```
 
+Code modules are loaded from the GitHub repository cloned into:
+
+```text
+/content/simpsons-classification
+```
+
 The notebook expects the Kaggle archive to be unpacked in Colab into `/content/train` and `/content/testset`.
 
+Open in Colab:
+
+```text
+https://colab.research.google.com/github/eritry/simpsons-classification/blob/main/simpsons.ipynb
+```
