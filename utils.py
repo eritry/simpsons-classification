@@ -65,8 +65,8 @@ def _get_num_classes(model, dataloaders=None):
             return int(max(labels) + 1)
 
     raise ValueError(
-        "Не удалось определить число классов. "
-        "Передай модель с model.fc.out_features или dataset.label_encoder/classes."
+        "Could not infer the number of classes. "
+        "Pass a model with model.fc.out_features or a dataset with label_encoder/classes."
     )
 
 

@@ -1,13 +1,26 @@
-# Simpsons Image Classification
+# Simpsons Character Classification
 
-Image classification notebook for the Simpsons character dataset.
+Portfolio-ready computer vision project for classifying characters from *The Simpsons*.
 
-The project contains:
+The project demonstrates an end-to-end PyTorch image-classification workflow: dataset loading, stratified validation, class-imbalance handling, transfer learning, fine-tuning, error analysis, and Kaggle-style submission generation.
+
+## What This Shows
+
+- Transfer learning with ImageNet-pretrained EfficientNetV2-S.
+- Clean train/validation split with stratification.
+- Class-imbalance handling with weighted sampling and weighted loss.
+- Modular notebook design with reusable Python helpers.
+- Error-analysis workflow for identifying suspicious labels.
+- Reproducible Colab setup using GitHub-hosted source code and dataset release assets.
+
+## Repository Structure
 
 - `simpsons.ipynb` - main Colab notebook with data loading, training, validation, audit, and submission steps.
-- `utils.py` - training loop, metrics, checkpointing, plotting history, and prediction helpers.
-- `visualization.py` - image display helpers.
+- `utils.py` - training loop, metrics, checkpointing, history plotting, and prediction helpers.
+- `visualization.py` - image display and prediction visualization helpers.
 - `label_audit.py` - helpers for finding suspicious labels and reviewing audit examples.
+
+## Data and Artifacts
 
 All Google Drive artifacts are configured to live under:
 
@@ -34,8 +47,26 @@ The notebook caches that archive on Google Drive at:
 /content/drive/MyDrive/Colab Notebooks/simpsons/dataset/journey-springfield.zip
 ```
 
+## How to Run
+
 Open in Colab:
 
 ```text
 https://colab.research.google.com/github/eritry/simpsons-classification/blob/main/simpsons.ipynb
 ```
+
+Run the notebook top to bottom. The first run downloads and caches the dataset archive; later runs reuse the cached copy from Google Drive.
+
+## Reference Performance
+
+A representative run reached approximately:
+
+- Validation accuracy: `0.95`
+- Validation macro F1: `0.85`
+- Kaggle score recorded during the project: `0.97236`
+
+Exact numbers can vary slightly with runtime, random seed, and future label-audit decisions.
+
+## Notes
+
+The notebook is intentionally structured as a readable project report rather than a single monolithic script. Reusable code lives in `.py` modules, while the notebook focuses on experiment decisions, validation, and interpretation.

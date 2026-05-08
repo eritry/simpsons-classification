@@ -121,7 +121,7 @@ def show_suspicious_examples(df, dataset, n_rows=3, n_cols=4, start_pos=0):
     part = df.iloc[start_pos:start_pos + total].reset_index(drop=True)
 
     if len(part) == 0:
-        print("Нет примеров для показа.")
+        print("No examples to show.")
         return
 
     fig, axes = plt.subplots(
@@ -172,7 +172,7 @@ def show_class_pair_confusions(
         ascending=[False, False, False],
     ).reset_index(drop=True)
 
-    print(f"Найдено {len(df_pair)} примеров: {true_label} -> {predicted_label}")
+    print(f"Found {len(df_pair)} examples: {true_label} -> {predicted_label}")
     show_suspicious_examples(
         df_pair,
         dataset,
@@ -222,15 +222,15 @@ def run_label_audit(
     if save_all_csv_path is not None:
         Path(save_all_csv_path).parent.mkdir(parents=True, exist_ok=True)
         df_all.to_csv(save_all_csv_path, index=False)
-        print("Все предсказания сохранены в:", save_all_csv_path)
+        print("All predictions saved to:", save_all_csv_path)
 
     if save_review_csv_path is not None:
         Path(save_review_csv_path).parent.mkdir(parents=True, exist_ok=True)
         df_suspicious.to_csv(save_review_csv_path, index=False)
-        print("Подозрительные примеры сохранены в:", save_review_csv_path)
+        print("Suspicious examples saved to:", save_review_csv_path)
 
-    print("Всего train-примеров проверено:", len(df_all))
-    print("Подозрительных примеров найдено:", len(df_suspicious))
+    print("Total train examples scanned:", len(df_all))
+    print("Suspicious examples found:", len(df_suspicious))
 
     return audit_dataset, df_all, df_suspicious
 
@@ -240,7 +240,7 @@ def show_review_examples(review_df, dataset, start_pos=0, n_rows=3, n_cols=4):
     part = review_df.iloc[start_pos:start_pos + total]
 
     if len(part) == 0:
-        print("Нет примеров для показа.")
+        print("No examples to show.")
         return
 
     fig, axes = plt.subplots(
