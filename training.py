@@ -449,6 +449,76 @@ def train_transfer_model(model, model_name, dataloaders, device, class_weights, 
     backbone = get_backbone(model, model_name)
     classifier = get_classifier(model, model_name)
 
+    if config.get("strategy") == "two_phase_no_freeze":
+        for parameter in model.parameters():
+            parameter.requires_grad = True
+
+        phase1_optimizer = torch.optim.AdamW(
+            [
+                {"params": backbone.parameters(), "lr": config["phase1_backbone_lr"]},
+                {"params": classifier.parameters(), "lr": config["phase1_classifier_lr"]},
+            ],
+            weight_decay=config.get("weight_decay", 0.0),
+        )
+        phase1_criterion = torch.nn.CrossEntropyLoss(
+            weight=class_weights,
+            label_smoothing=config.get("label_smoothing", 0.0),
+        )
+        phase1_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            phase1_optimizer,
+            T_max=config["phase1_epochs"],
+            eta_min=config.get("phase1_eta_min", config.get("eta_min", 1e-6)),
+        )
+
+        history = train_CNN(
+            model=model,
+            num_epochs=config["phase1_epochs"],
+            dataloaders=dataloaders,
+            optimizer=phase1_optimizer,
+            loss_func=phase1_criterion,
+            device=device,
+            val_every_steps=config.get("val_every_steps", 100),
+            save_dir=config["phase1_dir"],
+            scheduler=phase1_scheduler,
+            stage_name=f"{config['display_name']} fine-tuning phase 1",
+        )
+
+        best_model_path = os.path.join(config["phase1_dir"], "best_model.pth")
+        if os.path.exists(best_model_path):
+            model.load_state_dict(torch.load(best_model_path, map_location=device))
+            tqdm.write(f"loaded best phase 1 checkpoint: {best_model_path}")
+
+        phase2_optimizer = torch.optim.AdamW(
+            [
+                {"params": backbone.parameters(), "lr": config["phase2_backbone_lr"]},
+                {"params": classifier.parameters(), "lr": config["phase2_classifier_lr"]},
+            ],
+            weight_decay=config.get("weight_decay", 0.0),
+        )
+        phase2_criterion = torch.nn.CrossEntropyLoss(
+            weight=class_weights,
+            label_smoothing=config.get("label_smoothing", 0.0),
+        )
+        phase2_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            phase2_optimizer,
+            T_max=config["phase2_epochs"],
+            eta_min=config.get("phase2_eta_min", config.get("eta_min", 1e-6)),
+        )
+
+        return train_CNN(
+            model=model,
+            num_epochs=config["phase2_epochs"],
+            dataloaders=dataloaders,
+            optimizer=phase2_optimizer,
+            loss_func=phase2_criterion,
+            device=device,
+            val_every_steps=config.get("val_every_steps", 100),
+            save_dir=config["phase2_dir"],
+            scheduler=phase2_scheduler,
+            history=history,
+            stage_name=f"{config['display_name']} fine-tuning phase 2",
+        )
+
     for parameter in model.parameters():
         parameter.requires_grad = False
     for parameter in classifier.parameters():

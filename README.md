@@ -16,13 +16,13 @@ The project demonstrates an end-to-end PyTorch image-classification workflow: da
 
 ## Model Comparison
 
-| Model | Pretraining | Parameters | Validation Macro F1 | Kaggle Score | Role |
-|---|---:|---:|---:|---:|---|
-| SimpleCNN | No | `180,762` | `~0.79` | baseline only | From-scratch baseline |
-| DenseNet121 | ImageNet | `~7.2M` | `~0.95` | `~0.99256` | Main/default transfer-learning model |
-| EfficientNetV2-S | ImageNet | `~21M` | `~0.85` | `~0.97236` | Alternative transfer-learning comparison |
+| Model | Pretraining | Parameters | Validation Macro F1 | Validation Accuracy | Kaggle Score | Role |
+|---|---:|---:|---:|---:|---:|---|
+| SimpleCNN | No | `180,762` | `~0.70` | `~0.81` | baseline only | From-scratch baseline |
+| DenseNet121 | ImageNet | `~7.2M` | `~0.95` | ? | `~0.99256` | Main/default transfer-learning model |
+| EfficientNetV2-S | ImageNet | `~21M` | `~0.85` | ? | `~0.97236` | Alternative transfer-learning comparison |
 
-The baseline confirms that the data pipeline learns meaningful visual features, while the transfer-learning models show the performance gain from pretrained representations. Macro F1 is the primary validation metric because the class distribution is highly imbalanced.
+The baseline confirms that the data pipeline learns meaningful visual features, while the transfer-learning models show the performance gain from pretrained representations. DenseNet121 is the default model and uses two no-freeze fine-tuning phases with discriminative learning rates. Macro F1 is the primary validation metric because the class distribution is highly imbalanced.
 
 ## Repository Structure
 
