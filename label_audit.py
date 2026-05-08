@@ -1,4 +1,5 @@
 from pathlib import Path
+import shutil
 
 import numpy as np
 import pandas as pd
@@ -270,3 +271,66 @@ def show_review_examples(review_df, dataset, start_pos=0, n_rows=3, n_cols=4):
 
     plt.tight_layout()
     plt.show()
+
+
+def move_reviewed_files_to_class(review_df, dry_run=True):
+    """
+    Moves only rows with action == "MOVE".
+    The target class comes from correct_label when available, otherwise from predicted_label.
+    """
+    required_columns = ["path", "predicted_label", "action"]
+    missing_columns = [col for col in required_columns if col not in review_df.columns]
+    if missing_columns:
+        raise ValueError(f"review_df is missing required columns: {missing_columns}")
+
+    actions = review_df["action"].fillna("").astype(str).str.upper()
+    rows_to_move = review_df[actions == "MOVE"].copy()
+    print("Files to move:", len(rows_to_move))
+
+    moved_paths = {}
+
+    for _, row in rows_to_move.iterrows():
+        src_path = Path(row["path"])
+        correct_label = row.get("correct_label", "")
+        target_class = "" if pd.isna(correct_label) else str(correct_label).strip()
+        if not target_class:
+            target_class = str(row["predicted_label"]).strip()
+
+        if not src_path.exists():
+            print("File not found, skipping:", src_path)
+            continue
+
+        current_class_dir = src_path.parent
+        split_root_dir = current_class_dir.parent
+        dst_dir = split_root_dir / target_class
+        dst_path = dst_dir / src_path.name
+
+        if not dst_dir.exists():
+            print("Target class directory not found, skipping:", dst_dir)
+            continue
+
+        if current_class_dir.name == target_class:
+            print("File is already in the target directory, skipping:", src_path)
+            continue
+
+        if dst_path.exists():
+            stem = src_path.stem
+            suffix = src_path.suffix
+            counter = 1
+            while dst_path.exists():
+                dst_path = dst_dir / f"{stem}_moved_{counter}{suffix}"
+                counter += 1
+
+        print("FROM:", src_path)
+        print("TO:  ", dst_path)
+
+        if not dry_run:
+            shutil.move(str(src_path), str(dst_path))
+            moved_paths[src_path] = dst_path
+
+    if dry_run:
+        print("This was dry_run=True. No files were moved.")
+    else:
+        print("Done. Files were moved.")
+
+    return moved_paths

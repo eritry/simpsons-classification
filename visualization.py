@@ -1,6 +1,8 @@
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
+from collections import Counter
 from matplotlib import patches, pyplot as plt
 from matplotlib.font_manager import FontProperties
 
@@ -134,3 +136,64 @@ def show_images_with_predictions(
         )
         fig_x.set_axis_off()
 
+
+def get_simpsons_counts(dataset):
+    class_names = list(dataset.label_encoder.classes_)
+
+    class_names_from_paths = [
+        path.parent.name
+        for path in dataset.files
+    ]
+
+    counts_by_class_name = Counter(class_names_from_paths)
+
+    counts = [
+        counts_by_class_name[class_name]
+        for class_name in class_names
+    ]
+
+    return class_names, counts
+
+
+def plot_train_val_distribution(
+    train_dataset,
+    val_dataset,
+    title="Train vs Validation class distribution",
+):
+    train_class_names, train_counts = get_simpsons_counts(train_dataset)
+    val_class_names, val_counts = get_simpsons_counts(val_dataset)
+
+    assert train_class_names == val_class_names, "Train and validation classes do not match"
+
+    df = pd.DataFrame({
+        "class_name": train_class_names,
+        "train_count": train_counts,
+        "val_count": val_counts,
+    })
+
+    df["total_count"] = df["train_count"] + df["val_count"]
+    df = df.sort_values("total_count", ascending=False).reset_index(drop=True)
+
+    x = np.arange(len(df))
+    width = 0.42
+
+    plt.figure(figsize=(18, 6))
+    plt.bar(x - width / 2, df["train_count"], width, label="train")
+    plt.bar(x + width / 2, df["val_count"], width, label="val")
+
+    plt.xticks(x, df["class_name"], rotation=90)
+    plt.xlabel("Character")
+    plt.ylabel("Number of images")
+    plt.title(title)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+    print("Train total:", int(df["train_count"].sum()))
+    print("Validation total:", int(df["val_count"].sum()))
+    print("Total:", int(df["total_count"].sum()))
+
+    print("\nTrain min/max:", int(df["train_count"].min()), "/", int(df["train_count"].max()))
+    print("Val min/max:", int(df["val_count"].min()), "/", int(df["val_count"].max()))
+
+    return df

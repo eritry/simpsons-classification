@@ -16,9 +16,13 @@ The project demonstrates an end-to-end PyTorch image-classification workflow: da
 ## Repository Structure
 
 - `simpsons.ipynb` - main Colab notebook with data loading, training, validation, audit, and submission steps.
-- `utils.py` - training loop, metrics, checkpointing, history plotting, and prediction helpers.
-- `visualization.py` - image display and prediction visualization helpers.
-- `label_audit.py` - helpers for finding suspicious labels and reviewing audit examples.
+- `data_io.py` - dataset download and extraction helpers for Colab.
+- `dataset.py` - dataset class, transforms, stratified split helpers, and dataloader construction.
+- `model.py` - EfficientNetV2-S model factory.
+- `training.py` - training loop, metrics, checkpointing, history plotting, and prediction helpers.
+- `visualization.py` - image display, prediction visualization, and class-distribution plots.
+- `label_audit.py` - helpers for finding suspicious labels, reviewing audit examples, and applying reviewed label moves.
+- `submission.py` - checkpoint loading and Kaggle-style submission helpers.
 
 ## Data and Artifacts
 
