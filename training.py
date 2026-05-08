@@ -6,6 +6,8 @@ from matplotlib import pyplot as plt
 from sklearn.metrics import f1_score
 from tqdm import tqdm
 
+from model import get_backbone, get_classifier
+
 
 def make_training_history():
     return {
@@ -179,6 +181,15 @@ def save_model_and_history(
     save_history_json(history, history_path)
 
 
+def _format_metric(value):
+    return f"{value:.4f}"
+
+
+def _best_history_value(history, key):
+    values = history.get(f"{key}_step", []) + history.get(f"{key}_epoch", [])
+    return max(values) if values else 0.0
+
+
 def train_CNN(
     model,
     num_epochs,
@@ -190,6 +201,7 @@ def train_CNN(
     save_dir="/content/drive/MyDrive/checkpoints",
     scheduler=None,
     history=None,
+    stage_name="training",
 ):
     os.makedirs(save_dir, exist_ok=True)
     model.to(device)
@@ -210,8 +222,12 @@ def train_CNN(
 
     steps = 0
 
+    tqdm.write(f"\n=== {stage_name} ===")
+    tqdm.write(
+        "metric columns: loss | train_acc | valid_acc | train_f1 | valid_f1 | best_valid_f1"
+    )
+
     for epoch in range(num_epochs):
-        print(f"\nEpoch: {epoch + 1}/{num_epochs}")
         model.train()
 
         train_correct_step = 0
@@ -225,7 +241,14 @@ def train_CNN(
         train_true_epoch = []
         train_pred_epoch = []
 
-        for x, y in tqdm(dataloaders["train"]):
+        progress = tqdm(
+            dataloaders["train"],
+            desc=f"epoch {epoch + 1:02d}/{num_epochs:02d}",
+            dynamic_ncols=True,
+            leave=False,
+        )
+
+        for x, y in progress:
             x = x.to(device)
             y = y.to(device)
 
@@ -237,6 +260,7 @@ def train_CNN(
 
             loss_value = float(loss.item())
             batch_size = y.size(0)
+            progress.set_postfix(loss=f"{loss_value:.4f}", best_f1=f"{best_valid_f1:.4f}")
 
             history["train_loss_step"].append(loss_value)
             train_loss_sum_epoch += loss_value * batch_size
@@ -284,12 +308,13 @@ def train_CNN(
                 history["train_f1_step"].append(float(train_f1_step))
                 history["valid_f1_step"].append(float(valid_f1_step))
 
-                print(
-                    f"Step {steps}: "
-                    f"train_acc = {train_acc_step:.4f}, "
-                    f"valid_acc = {valid_acc_step:.4f}, "
-                    f"train_f1 = {train_f1_step:.4f}, "
-                    f"valid_f1 = {valid_f1_step:.4f}"
+                tqdm.write(
+                    f"  step {steps:04d} | "
+                    f"loss {_format_metric(loss_value)} | "
+                    f"train_acc {_format_metric(train_acc_step)} | "
+                    f"valid_acc {_format_metric(valid_acc_step)} | "
+                    f"train_f1 {_format_metric(train_f1_step)} | "
+                    f"valid_f1 {_format_metric(valid_f1_step)}"
                 )
 
                 if valid_f1_step > best_valid_f1:
@@ -312,7 +337,7 @@ def train_CNN(
                         os.path.join(save_dir, "best_model.pth"),
                     )
 
-                    print(f"Saved best model by valid_f1: {best_valid_f1:.4f}")
+                    tqdm.write(f"  saved new best checkpoint: valid_f1 {_format_metric(best_valid_f1)}")
 
                 model.train()
 
@@ -345,16 +370,18 @@ def train_CNN(
         history["valid_f1_epoch"].append(float(valid_f1_epoch))
         history["train_loss_epoch"].append(float(train_loss_epoch))
 
-        print(
-            f"Epoch {epoch + 1}/{num_epochs}: "
-            f"train_loss = {train_loss_epoch:.4f}, "
-            f"train_acc = {train_acc_epoch:.4f}, "
-            f"valid_acc = {valid_acc_epoch:.4f}, "
-            f"train_f1 = {train_f1_epoch:.4f}, "
-            f"valid_f1 = {valid_f1_epoch:.4f}"
+        tqdm.write(
+            f"epoch {epoch + 1:02d}/{num_epochs:02d} | "
+            f"loss {_format_metric(train_loss_epoch)} | "
+            f"train_acc {_format_metric(train_acc_epoch)} | "
+            f"valid_acc {_format_metric(valid_acc_epoch)} | "
+            f"train_f1 {_format_metric(train_f1_epoch)} | "
+            f"valid_f1 {_format_metric(valid_f1_epoch)} | "
+            f"best_valid_f1 {_format_metric(max(best_valid_f1, valid_f1_epoch))}"
         )
 
-        if scheduler is not None: scheduler.step()
+        if scheduler is not None:
+            scheduler.step()
 
         if valid_f1_epoch > best_valid_f1:
             best_valid_f1 = valid_f1_epoch
@@ -376,7 +403,7 @@ def train_CNN(
                 os.path.join(save_dir, "best_model.pth"),
             )
 
-            print(f"Saved best model by valid_f1: {best_valid_f1:.4f}")
+            tqdm.write(f"saved new best checkpoint: valid_f1 {_format_metric(best_valid_f1)}")
 
         save_model_and_history(
             save_dir=save_dir,
@@ -393,6 +420,105 @@ def train_CNN(
         model.train()
 
     return history
+
+
+def train_baseline_model(model, dataloaders, device, config):
+    criterion = torch.nn.CrossEntropyLoss(
+        label_smoothing=config.get("label_smoothing", 0.0),
+    )
+    optimizer = torch.optim.Adam(
+        model.parameters(),
+        lr=config["lr"],
+        weight_decay=config.get("weight_decay", 0.0),
+    )
+
+    return train_CNN(
+        model=model,
+        num_epochs=config["epochs"],
+        dataloaders=dataloaders,
+        optimizer=optimizer,
+        loss_func=criterion,
+        device=device,
+        val_every_steps=config.get("val_every_steps", 100),
+        save_dir=config["checkpoint_dir"],
+        stage_name=f"{config['display_name']} from scratch",
+    )
+
+
+def train_transfer_model(model, model_name, dataloaders, device, class_weights, config):
+    backbone = get_backbone(model, model_name)
+    classifier = get_classifier(model, model_name)
+
+    for parameter in model.parameters():
+        parameter.requires_grad = False
+    for parameter in classifier.parameters():
+        parameter.requires_grad = True
+
+    head_criterion = torch.nn.CrossEntropyLoss(
+        label_smoothing=config.get("head_label_smoothing", 0.0),
+    )
+    head_optimizer = torch.optim.AdamW(
+        classifier.parameters(),
+        lr=config["head_lr"],
+        weight_decay=config.get("weight_decay", 0.0),
+    )
+
+    history = train_CNN(
+        model=model,
+        num_epochs=config["head_epochs"],
+        dataloaders=dataloaders,
+        optimizer=head_optimizer,
+        loss_func=head_criterion,
+        device=device,
+        val_every_steps=config.get("val_every_steps", 100),
+        save_dir=config["stage1_dir"],
+        stage_name=f"{config['display_name']} classifier head",
+    )
+
+    for parameter in model.parameters():
+        parameter.requires_grad = True
+
+    optimizer = torch.optim.AdamW(
+        [
+            {"params": backbone.parameters(), "lr": config["backbone_lr"]},
+            {"params": classifier.parameters(), "lr": config["classifier_lr"]},
+        ],
+        weight_decay=config.get("weight_decay", 0.0),
+    )
+    criterion = torch.nn.CrossEntropyLoss(
+        weight=class_weights,
+        label_smoothing=config.get("fine_tune_label_smoothing", 0.0),
+    )
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+        optimizer,
+        T_max=config["fine_tune_epochs"],
+        eta_min=config.get("eta_min", 1e-6),
+    )
+
+    return train_CNN(
+        model=model,
+        num_epochs=config["fine_tune_epochs"],
+        dataloaders=dataloaders,
+        optimizer=optimizer,
+        loss_func=criterion,
+        device=device,
+        val_every_steps=config.get("val_every_steps", 100),
+        save_dir=config["stage2_dir"],
+        scheduler=scheduler,
+        history=history,
+        stage_name=f"{config['display_name']} fine-tuning",
+    )
+
+
+def summarize_history(model_name, history, parameter_count):
+    return {
+        "model": model_name,
+        "parameters": int(parameter_count),
+        "best_valid_macro_f1": float(_best_history_value(history, "valid_f1")),
+        "best_valid_accuracy": float(_best_history_value(history, "valid_acc")),
+        "last_train_loss": float(history["train_loss_epoch"][-1]) if history["train_loss_epoch"] else None,
+        "epochs_completed": len(history["train_loss_epoch"]),
+    }
 
 
 def plot_history(history):

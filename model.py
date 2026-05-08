@@ -94,6 +94,20 @@ def create_model(model_name, num_classes, dropout=0.3):
     return factories[model_name](num_classes=num_classes, dropout=dropout)
 
 
+def get_backbone(model, model_name):
+    if model_name in {"densenet121", "efficientnet_v2_s"} and hasattr(model, "features"):
+        return model.features
+
+    raise ValueError(f"Backbone accessor is not defined for model_name={model_name!r}")
+
+
+def get_classifier(model, model_name):
+    if model_name in {"densenet121", "efficientnet_v2_s"} and hasattr(model, "classifier"):
+        return model.classifier
+
+    raise ValueError(f"Classifier accessor is not defined for model_name={model_name!r}")
+
+
 def count_parameters(model, trainable_only=False):
     parameters = model.parameters()
     if trainable_only:

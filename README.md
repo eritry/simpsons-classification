@@ -6,7 +6,7 @@ The project demonstrates an end-to-end PyTorch image-classification workflow: da
 
 ## What This Shows
 
-- Transfer learning with ImageNet-pretrained EfficientNetV2-S.
+- Transfer learning with ImageNet-pretrained DenseNet121 and EfficientNetV2-S.
 - Baseline comparison across SimpleCNN, DenseNet121, and EfficientNetV2-S.
 - Clean train/validation split with stratification.
 - Class-imbalance handling with weighted sampling and weighted loss.
@@ -19,8 +19,8 @@ The project demonstrates an end-to-end PyTorch image-classification workflow: da
 | Model | Pretraining | Parameters | Validation Macro F1 | Kaggle Score | Role |
 |---|---:|---:|---:|---:|---|
 | SimpleCNN | No | `180,762` | `~0.79` | baseline only | From-scratch baseline |
-| DenseNet121 | ImageNet | `~7.2M` | `~0.95` | `~0.99256` | Strong transfer-learning reference |
-| EfficientNetV2-S | ImageNet | `~21M` | `~0.85` | `~0.97236` | Current default pipeline |
+| DenseNet121 | ImageNet | `~7.2M` | `~0.95` | `~0.99256` | Main/default transfer-learning model |
+| EfficientNetV2-S | ImageNet | `~21M` | `~0.85` | `~0.97236` | Alternative transfer-learning comparison |
 
 The baseline confirms that the data pipeline learns meaningful visual features, while the transfer-learning models show the performance gain from pretrained representations. Macro F1 is the primary validation metric because the class distribution is highly imbalanced.
 
