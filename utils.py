@@ -4,7 +4,7 @@ import os
 import torch
 from matplotlib import pyplot as plt
 from sklearn.metrics import f1_score
-from tqdm import tqdm, tqdm_notebook
+from tqdm import tqdm
 
 
 def make_training_history():
@@ -126,14 +126,6 @@ def evaluate(model, dataloader, device, num_classes=None):
     }
 
 
-def save_best_model(model, current_valid_f1, best_valid_f1, save_dir):
-    if current_valid_f1 > best_valid_f1:
-        best_valid_f1 = current_valid_f1
-        torch.save(model.state_dict(), os.path.join(save_dir, "best_model.pth"))
-
-    return best_valid_f1
-
-
 def save_training_state(
     save_path,
     model,
@@ -187,16 +179,6 @@ def save_model_and_history(
     save_history_json(history, history_path)
 
 
-def log_metrics_to_tensorboard(writer, metrics, step):
-    if writer is None:
-        return
-
-    for metric_name, metric_value in metrics.items():
-        writer.add_scalar(metric_name, metric_value, step)
-
-    writer.flush()
-
-
 def train_CNN(
     model,
     num_epochs,
@@ -207,7 +189,6 @@ def train_CNN(
     val_every_steps=100,
     save_dir="/content/drive/MyDrive/checkpoints",
     scheduler=None,
-    writer=None,
     history=None,
 ):
     os.makedirs(save_dir, exist_ok=True)
@@ -311,18 +292,6 @@ def train_CNN(
                     f"valid_f1 = {valid_f1_step:.4f}"
                 )
 
-                log_metrics_to_tensorboard(
-                    writer=writer,
-                    metrics={
-                        "Accuracy/train_step": train_acc_step,
-                        "Accuracy/valid_step": valid_acc_step,
-                        "F1/train_step": train_f1_step,
-                        "F1/valid_step": valid_f1_step,
-                        "Loss/train_step": loss_value,
-                    },
-                    step=steps,
-                )
-
                 if valid_f1_step > best_valid_f1:
                     best_valid_f1 = valid_f1_step
 
@@ -386,18 +355,6 @@ def train_CNN(
         )
 
         if scheduler is not None: scheduler.step()
-
-        log_metrics_to_tensorboard(
-            writer=writer,
-            metrics={
-                "Accuracy/train_epoch": train_acc_epoch,
-                "Accuracy/valid_epoch": valid_acc_epoch,
-                "F1/train_epoch": train_f1_epoch,
-                "F1/valid_epoch": valid_f1_epoch,
-                "Loss/train_epoch": train_loss_epoch,
-            },
-            step=epoch + 1,
-        )
 
         if valid_f1_epoch > best_valid_f1:
             best_valid_f1 = valid_f1_epoch
@@ -504,20 +461,6 @@ def plot_history(history):
         plt.show()
 
 
-def load_trained_model_from_checkpoint(model, checkpoint_path, device):
-    checkpoint = torch.load(checkpoint_path, map_location=device)
-
-    if "model_state_dict" in checkpoint:
-        model.load_state_dict(checkpoint["model_state_dict"])
-    else:
-        model.load_state_dict(checkpoint)
-
-    model.to(device)
-    model.eval()
-
-    return model
-
-
 def predict(model, loader, device=None):
     model.eval()
 
@@ -527,7 +470,7 @@ def predict(model, loader, device=None):
     all_predictions = torch.tensor([], device=device, dtype=torch.int)
     print("Test mode...")
 
-    for inputs in tqdm_notebook(loader):
+    for inputs in tqdm(loader, desc="Predicting"):
         inputs = inputs.to(device)
 
         with torch.no_grad():
