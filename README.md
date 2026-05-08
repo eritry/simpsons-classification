@@ -7,18 +7,29 @@ The project demonstrates an end-to-end PyTorch image-classification workflow: da
 ## What This Shows
 
 - Transfer learning with ImageNet-pretrained EfficientNetV2-S.
+- Baseline comparison across SimpleCNN, DenseNet121, and EfficientNetV2-S.
 - Clean train/validation split with stratification.
 - Class-imbalance handling with weighted sampling and weighted loss.
 - Modular notebook design with reusable Python helpers.
 - Error-analysis workflow for identifying suspicious labels.
 - Reproducible Colab setup using GitHub-hosted source code and dataset release assets.
 
+## Model Comparison
+
+| Model | Pretraining | Parameters | Validation Macro F1 | Kaggle Score | Role |
+|---|---:|---:|---:|---:|---|
+| SimpleCNN | No | `180,762` | `~0.79` | baseline only | From-scratch baseline |
+| DenseNet121 | ImageNet | `~7.2M` | `~0.95` | `~0.99256` | Strong transfer-learning reference |
+| EfficientNetV2-S | ImageNet | `~21M` | `~0.85` | `~0.97236` | Current default pipeline |
+
+The baseline confirms that the data pipeline learns meaningful visual features, while the transfer-learning models show the performance gain from pretrained representations. Macro F1 is the primary validation metric because the class distribution is highly imbalanced.
+
 ## Repository Structure
 
 - `simpsons.ipynb` - main Colab notebook with data loading, training, validation, audit, and submission steps.
 - `data_io.py` - dataset download and extraction helpers for Colab.
 - `dataset.py` - dataset class, transforms, stratified split helpers, and dataloader construction.
-- `model.py` - EfficientNetV2-S model factory.
+- `model.py` - SimpleCNN, DenseNet121, and EfficientNetV2-S model factories.
 - `training.py` - training loop, metrics, checkpointing, history plotting, and prediction helpers.
 - `visualization.py` - image display, prediction visualization, and class-distribution plots.
 - `label_audit.py` - helpers for finding suspicious labels, reviewing audit examples, and applying reviewed label moves.
