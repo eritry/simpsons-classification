@@ -34,6 +34,7 @@ The baseline confirms that the data pipeline learns meaningful visual features, 
 - `visualization.py` - image display, prediction visualization, and class-distribution plots.
 - `label_audit.py` - helpers for finding suspicious labels, reviewing audit examples, and applying reviewed label moves.
 - `submission.py` - checkpoint loading and Kaggle-style submission helpers.
+- `artifacts/label_audit/suspicious_manual.csv` - manually reviewed suspicious-label candidates used by the optional label-fix step.
 
 ## Data and Artifacts
 
@@ -61,6 +62,14 @@ The notebook caches that archive on Google Drive at:
 ```text
 /content/drive/MyDrive/Colab Notebooks/simpsons/dataset/journey-springfield.zip
 ```
+
+The manually reviewed label-audit CSV is versioned in the repository:
+
+```text
+artifacts/label_audit/suspicious_manual.csv
+```
+
+Rows marked with `MOVE` are consumed by the optional label-fix step in the notebook. The CSV stores Colab-style image paths; the helper resolves them against the current extracted training directory before moving files.
 
 ## How to Run
 

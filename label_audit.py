@@ -273,7 +273,30 @@ def show_review_examples(review_df, dataset, start_pos=0, n_rows=3, n_cols=4):
     plt.show()
 
 
-def move_reviewed_files_to_class(review_df, dry_run=True):
+def _resolve_review_path(path_value, dataset_root=None):
+    src_path = Path(path_value)
+
+    if src_path.exists() or dataset_root is None:
+        return src_path
+
+    dataset_root = Path(dataset_root)
+    path_parts = src_path.parts
+
+    for marker in ("train", "simpsons_dataset"):
+        if marker in path_parts:
+            marker_index = path_parts.index(marker)
+            candidate = dataset_root / Path(*path_parts[marker_index + 1:])
+            if candidate.exists():
+                return candidate
+
+    candidate = dataset_root / src_path.parent.name / src_path.name
+    if candidate.exists():
+        return candidate
+
+    return src_path
+
+
+def move_reviewed_files_to_class(review_df, dry_run=True, dataset_root=None):
     """
     Moves only rows with action == "MOVE".
     The target class comes from correct_label when available, otherwise from predicted_label.
@@ -290,7 +313,7 @@ def move_reviewed_files_to_class(review_df, dry_run=True):
     moved_paths = {}
 
     for _, row in rows_to_move.iterrows():
-        src_path = Path(row["path"])
+        src_path = _resolve_review_path(row["path"], dataset_root=dataset_root)
         correct_label = row.get("correct_label", "")
         target_class = "" if pd.isna(correct_label) else str(correct_label).strip()
         if not target_class:

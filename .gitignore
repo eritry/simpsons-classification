@@ -6,7 +6,7 @@ __pycache__/
 # Local training artifacts
 runs/
 checkpoints/
-label_audit/
+/label_audit/
 *.pth
 *.pt
 *.ckpt
@@ -18,4 +18,3 @@ testset/
 journey-springfield.zip
 sample_submission.csv
 simple_cnn_baseline.csv
-
