@@ -190,6 +190,60 @@ def _best_history_value(history, key):
     return max(values) if values else 0.0
 
 
+def _format_epoch_row(
+    epoch,
+    num_epochs,
+    train_loss,
+    train_acc,
+    valid_acc,
+    train_f1,
+    valid_f1,
+    best_valid_f1,
+    status,
+):
+    return (
+        f"{epoch}/{num_epochs:<5}"
+        f"{_format_metric(train_loss):<12}"
+        f"{_format_metric(train_acc):<11}"
+        f"{_format_metric(valid_acc):<9}"
+        f"{_format_metric(train_f1):<10}"
+        f"{_format_metric(valid_f1):<8}"
+        f"{_format_metric(best_valid_f1):<9}"
+        f"{status}"
+    )
+
+
+def epoch_history_rows(history):
+    rows = []
+    train_losses = history.get("train_loss_epoch", [])
+    train_accs = history.get("train_acc_epoch", [])
+    valid_accs = history.get("valid_acc_epoch", [])
+    train_f1s = history.get("train_f1_epoch", [])
+    valid_f1s = history.get("valid_f1_epoch", [])
+
+    best_valid_f1 = 0.0
+
+    for index, train_loss in enumerate(train_losses):
+        valid_f1 = valid_f1s[index]
+        checkpoint = "saved" if valid_f1 > best_valid_f1 else "kept"
+        best_valid_f1 = max(best_valid_f1, valid_f1)
+
+        rows.append(
+            {
+                "epoch": index + 1,
+                "train_loss": float(train_loss),
+                "train_accuracy": float(train_accs[index]),
+                "valid_accuracy": float(valid_accs[index]),
+                "train_macro_f1": float(train_f1s[index]),
+                "valid_macro_f1": float(valid_f1),
+                "best_valid_macro_f1": float(best_valid_f1),
+                "checkpoint": checkpoint,
+            }
+        )
+
+    return rows
+
+
 def train_CNN(
     model,
     num_epochs,
@@ -197,7 +251,7 @@ def train_CNN(
     optimizer,
     loss_func,
     device,
-    val_every_steps=100,
+    val_every_steps=None,
     save_dir="/content/drive/MyDrive/checkpoints",
     scheduler=None,
     history=None,
@@ -221,10 +275,20 @@ def train_CNN(
         best_valid_f1 = 0.0
 
     steps = 0
+    best_model_path = os.path.join(save_dir, "best_model.pth")
 
     tqdm.write(f"\n=== {stage_name} ===")
+    tqdm.write(f"Epochs: {num_epochs} | Checkpoint metric: valid_f1")
+    tqdm.write("")
     tqdm.write(
-        "metric columns: loss | train_acc | valid_acc | train_f1 | valid_f1 | best_valid_f1"
+        f"{'Epoch':<7}"
+        f"{'Train Loss':<12}"
+        f"{'Train Acc':<11}"
+        f"{'Val Acc':<9}"
+        f"{'Train F1':<10}"
+        f"{'Val F1':<8}"
+        f"{'Best F1':<9}"
+        f"{'Status'}"
     )
 
     for epoch in range(num_epochs):
@@ -260,7 +324,7 @@ def train_CNN(
 
             loss_value = float(loss.item())
             batch_size = y.size(0)
-            progress.set_postfix(loss=f"{loss_value:.4f}", best_f1=f"{best_valid_f1:.4f}")
+            progress.set_postfix(loss=f"{loss_value:.4f}")
 
             history["train_loss_step"].append(loss_value)
             train_loss_sum_epoch += loss_value * batch_size
@@ -285,7 +349,7 @@ def train_CNN(
 
             steps += 1
 
-            if steps % val_every_steps == 0:
+            if val_every_steps is not None and val_every_steps > 0 and steps % val_every_steps == 0:
                 train_acc_step = train_correct_step / train_total_step if train_total_step > 0 else 0.0
                 train_f1_step = _macro_f1(
                     y_true=train_true_step,
@@ -334,10 +398,8 @@ def train_CNN(
 
                     torch.save(
                         model.state_dict(),
-                        os.path.join(save_dir, "best_model.pth"),
+                        best_model_path,
                     )
-
-                    tqdm.write(f"  saved new best checkpoint: valid_f1 {_format_metric(best_valid_f1)}")
 
                 model.train()
 
@@ -370,21 +432,13 @@ def train_CNN(
         history["valid_f1_epoch"].append(float(valid_f1_epoch))
         history["train_loss_epoch"].append(float(train_loss_epoch))
 
-        tqdm.write(
-            f"epoch {epoch + 1:02d}/{num_epochs:02d} | "
-            f"loss {_format_metric(train_loss_epoch)} | "
-            f"train_acc {_format_metric(train_acc_epoch)} | "
-            f"valid_acc {_format_metric(valid_acc_epoch)} | "
-            f"train_f1 {_format_metric(train_f1_epoch)} | "
-            f"valid_f1 {_format_metric(valid_f1_epoch)} | "
-            f"best_valid_f1 {_format_metric(max(best_valid_f1, valid_f1_epoch))}"
-        )
-
         if scheduler is not None:
             scheduler.step()
 
+        checkpoint_status = "kept"
         if valid_f1_epoch > best_valid_f1:
             best_valid_f1 = valid_f1_epoch
+            checkpoint_status = "saved"
 
             save_model_and_history(
                 save_dir=save_dir,
@@ -400,10 +454,8 @@ def train_CNN(
 
             torch.save(
                 model.state_dict(),
-                os.path.join(save_dir, "best_model.pth"),
+                best_model_path,
             )
-
-            tqdm.write(f"saved new best checkpoint: valid_f1 {_format_metric(best_valid_f1)}")
 
         save_model_and_history(
             save_dir=save_dir,
@@ -417,7 +469,24 @@ def train_CNN(
             best_valid_f1=best_valid_f1,
         )
 
+        tqdm.write(
+            _format_epoch_row(
+                epoch=epoch + 1,
+                num_epochs=num_epochs,
+                train_loss=train_loss_epoch,
+                train_acc=train_acc_epoch,
+                valid_acc=valid_acc_epoch,
+                train_f1=train_f1_epoch,
+                valid_f1=valid_f1_epoch,
+                best_valid_f1=best_valid_f1,
+                status=checkpoint_status,
+            )
+        )
+
         model.train()
+
+    tqdm.write("")
+    tqdm.write(f"Best checkpoint: {best_model_path}")
 
     return history
 
@@ -439,7 +508,7 @@ def train_baseline_model(model, dataloaders, device, config):
         optimizer=optimizer,
         loss_func=criterion,
         device=device,
-        val_every_steps=config.get("val_every_steps", 100),
+        val_every_steps=config.get("val_every_steps"),
         save_dir=config["checkpoint_dir"],
         stage_name=f"{config['display_name']} from scratch",
     )
@@ -477,7 +546,7 @@ def train_transfer_model(model, model_name, dataloaders, device, class_weights, 
             optimizer=phase1_optimizer,
             loss_func=phase1_criterion,
             device=device,
-            val_every_steps=config.get("val_every_steps", 100),
+            val_every_steps=config.get("val_every_steps"),
             save_dir=config["phase1_dir"],
             scheduler=phase1_scheduler,
             stage_name=f"{config['display_name']} fine-tuning phase 1",
@@ -512,7 +581,7 @@ def train_transfer_model(model, model_name, dataloaders, device, class_weights, 
             optimizer=phase2_optimizer,
             loss_func=phase2_criterion,
             device=device,
-            val_every_steps=config.get("val_every_steps", 100),
+            val_every_steps=config.get("val_every_steps"),
             save_dir=config["phase2_dir"],
             scheduler=phase2_scheduler,
             history=history,
@@ -540,7 +609,7 @@ def train_transfer_model(model, model_name, dataloaders, device, class_weights, 
         optimizer=head_optimizer,
         loss_func=head_criterion,
         device=device,
-        val_every_steps=config.get("val_every_steps", 100),
+        val_every_steps=config.get("val_every_steps"),
         save_dir=config["stage1_dir"],
         stage_name=f"{config['display_name']} classifier head",
     )
@@ -572,7 +641,7 @@ def train_transfer_model(model, model_name, dataloaders, device, class_weights, 
         optimizer=optimizer,
         loss_func=criterion,
         device=device,
-        val_every_steps=config.get("val_every_steps", 100),
+        val_every_steps=config.get("val_every_steps"),
         save_dir=config["stage2_dir"],
         scheduler=scheduler,
         history=history,

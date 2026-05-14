@@ -20,7 +20,7 @@ The project demonstrates an end-to-end PyTorch image-classification workflow: da
 |---|---:|---:|---:|---:|---:|---|
 | SimpleCNN | No | `180,762` | `~0.70` | `~0.81` | baseline only | From-scratch baseline |
 | DenseNet121 | ImageNet | `~7.2M` | `~0.95` | ? | `~0.99256` | Main/default transfer-learning model |
-| EfficientNetV2-S | ImageNet | `~21M` | `~0.85` | ? | `~0.97236` | Alternative transfer-learning comparison |
+| EfficientNetV2-S | ImageNet | `~21M` | `0.8333` | `0.9354` | `~0.97236` | Alternative transfer-learning comparison |
 
 The baseline confirms that the data pipeline learns meaningful visual features, while the transfer-learning models show the performance gain from pretrained representations. DenseNet121 is the default model and uses two no-freeze fine-tuning phases with discriminative learning rates. Macro F1 is the primary validation metric because the class distribution is highly imbalanced.
 
@@ -85,8 +85,8 @@ Run the notebook top to bottom. The first run downloads and caches the dataset a
 
 A representative run reached approximately:
 
-- Validation accuracy: `0.95`
-- Validation macro F1: `0.85`
+- Validation accuracy: `0.9354`
+- Validation macro F1: `0.8333`
 - Kaggle score recorded during the project: `0.97236`
 
 Exact numbers can vary slightly with runtime, random seed, and future label-audit decisions.
