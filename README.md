@@ -18,11 +18,11 @@ The project demonstrates an end-to-end PyTorch image-classification workflow: da
 
 | Model | Pretraining | Parameters | Validation Macro F1 | Validation Accuracy | Kaggle Score | Role |
 |---|---:|---:|---:|---:|---:|---|
-| SimpleCNN | No | `180,762` | `~0.70` | `~0.81` | baseline only | From-scratch baseline |
-| DenseNet121 | ImageNet | `~7.2M` | `~0.95` | ? | `~0.99256` | Main/default transfer-learning model |
-| EfficientNetV2-S | ImageNet | `~21M` | `0.8333` | `0.9354` | `~0.97236` | Alternative transfer-learning comparison |
+| SimpleCNN | No | `180,762` | `0.7365` | `0.8387` | baseline only | From-scratch baseline |
+| DenseNet121 | ImageNet | `~7.2M` | `0.9353` | `0.9807` | `~0.993` | Best final model |
+| EfficientNetV2-S | ImageNet | `~21M` | `0.833` | `0.935` | `~0.972` | Main training-curve walkthrough |
 
-The baseline confirms that the data pipeline learns meaningful visual features, while the transfer-learning models show the performance gain from pretrained representations. DenseNet121 is the default model and uses two no-freeze fine-tuning phases with discriminative learning rates. Macro F1 is the primary validation metric because the class distribution is highly imbalanced.
+The baseline confirms that the data pipeline learns meaningful visual features, while the transfer-learning models show the performance gain from pretrained representations. EfficientNetV2-S is the default walkthrough model because its learning curves are easier to inspect, while DenseNet121 is reported as the strongest final model. Macro F1 is the primary validation metric because the class distribution is highly imbalanced.
 
 ## Repository Structure
 
@@ -85,9 +85,9 @@ Run the notebook top to bottom. The first run downloads and caches the dataset a
 
 A representative run reached approximately:
 
-- Validation accuracy: `0.9354`
-- Validation macro F1: `0.8333`
-- Kaggle score recorded during the project: `0.97236`
+- Validation accuracy: `0.935`
+- Validation macro F1: `0.833`
+- Kaggle score recorded during the project: `0.972`
 
 Exact numbers can vary slightly with runtime, random seed, and future label-audit decisions.
 
