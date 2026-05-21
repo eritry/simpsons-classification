@@ -18,9 +18,9 @@ The project demonstrates an end-to-end PyTorch image-classification workflow: da
 
 | Model | Pretraining | Parameters | Validation Macro F1 | Validation Accuracy | Kaggle Score | Role |
 |---|---:|---:|---:|---:|---:|---|
-| SimpleCNN | No | `180,762` | `0.7365` | `0.8387` | baseline only | From-scratch baseline |
-| DenseNet121 | ImageNet | `~7.2M` | `0.9353` | `0.9807` | `~0.993` | Best final model |
-| EfficientNetV2-S | ImageNet | `~21M` | `0.833` | `0.935` | `~0.972` | Main training-curve walkthrough |
+| SimpleCNN | No | `180,762` | `0.737` | `0.839` | baseline only | From-scratch baseline |
+| DenseNet121 | ImageNet | `7.2M` | `0.935` | `0.981` | `0.993` | Best final model |
+| EfficientNetV2-S | ImageNet | `21M` | `0.833` | `0.935` | `0.972` | Main training-curve walkthrough |
 
 The baseline confirms that the data pipeline learns meaningful visual features, while the transfer-learning models show the performance gain from pretrained representations. EfficientNetV2-S is the default walkthrough model because its learning curves are easier to inspect, while DenseNet121 is reported as the strongest final model. Macro F1 is the primary validation metric because the class distribution is highly imbalanced.
 
