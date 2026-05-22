@@ -1,12 +1,27 @@
 import pandas as pd
 import torch
+from pathlib import Path
+
+
+def load_model_weights(model, checkpoint_path, device):
+    checkpoint_path = Path(checkpoint_path).expanduser()
+
+    if not checkpoint_path.exists():
+        raise FileNotFoundError(f"Model checkpoint not found: {checkpoint_path}")
+
+    checkpoint = torch.load(checkpoint_path, map_location=device)
+    state_dict = checkpoint.get("model_state_dict", checkpoint) if isinstance(checkpoint, dict) else checkpoint
+
+    model.load_state_dict(state_dict)
+    model.to(device)
+    model.eval()
+
+    return model
 
 
 def load_best_model_if_exists(model, checkpoint_path, device):
     if checkpoint_path.exists():
-        model.load_state_dict(torch.load(checkpoint_path, map_location=device))
-        model.to(device)
-        model.eval()
+        model = load_model_weights(model, checkpoint_path, device)
     else:
         print(f"Best model checkpoint not found: {checkpoint_path}. Using current model state.")
 

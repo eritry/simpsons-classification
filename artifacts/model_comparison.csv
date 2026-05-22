@@ -1,0 +1,4 @@
+model,pretraining,parameters,validation_macro_f1,validation_accuracy,kaggle_score,role
+SimpleCNN,None,"180,762",0.737,0.839,,From-scratch baseline
+DenseNet121,ImageNet,7.2M,0.935,0.981,0.993,Best final model
+EfficientNetV2-S,ImageNet,21M,0.829,0.935,0.972,Main training-curve walkthrough

@@ -18,3 +18,5 @@ testset/
 journey-springfield.zip
 sample_submission.csv
 simple_cnn_baseline.csv
+*_baseline.csv
+*_submission.csv
