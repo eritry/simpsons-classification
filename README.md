@@ -1,8 +1,12 @@
 # Simpsons Character Classification
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/eritry/simpsons-classification/blob/main/simpsons.ipynb)
+
 Portfolio-ready computer vision project for classifying characters from *The Simpsons*.
 
-The project demonstrates an end-to-end PyTorch image-classification workflow: dataset loading, stratified validation, class-imbalance handling, transfer learning, fine-tuning, error analysis, and Kaggle-style submission generation.
+End-to-end PyTorch computer vision project for 42-class character classification, improving validation macro F1 from `0.737` with a from-scratch CNN to `0.935` with transfer learning.
+
+The project demonstrates a practical image-classification workflow: dataset loading, stratified validation, class-imbalance handling, transfer learning, fine-tuning, error analysis, and Kaggle-style submission generation.
 
 ## Highlights
 
@@ -11,6 +15,24 @@ The project demonstrates an end-to-end PyTorch image-classification workflow: da
 - Used transfer learning, weighted sampling, class-weighted loss, and manual label-audit workflow.
 - Reached a Kaggle score of `0.993` with the best final DenseNet121 run.
 - Organized the notebook into reusable modules for reproducible Colab execution.
+
+## Key Decisions
+
+- Used macro F1 as the main validation metric because the dataset is highly imbalanced.
+- Used weighted sampling and class-weighted loss to make rare classes visible during training.
+- Kept label fixes disabled by default so the raw dataset remains reproducible; reviewed corrections can be enabled explicitly.
+- Used EfficientNetV2-S as the main walkthrough model because its learning curves are easier to inspect.
+- Reported DenseNet121 as the best final model because it achieved the strongest validation and Kaggle metrics.
+
+## Review Guide
+
+For a quick review, start with these notebook sections:
+
+1. `Model Architecture` for the SimpleCNN, DenseNet121, and EfficientNetV2-S comparison.
+2. `Training and Validation` for the training strategy, learning curves, and validation metrics.
+3. `Per-Class Error Summary` for rare-class failure analysis.
+4. `Error Analysis and Label Audit` for suspicious-label detection.
+5. `Conclusion` for the final interpretation.
 
 ## What This Shows
 
@@ -44,6 +66,7 @@ The baseline confirms that the data pipeline learns meaningful visual features, 
 - `submission.py` - checkpoint loading and Kaggle-style submission helpers.
 - `artifacts/label_audit/suspicious_manual.csv` - manually reviewed suspicious-label candidates used by the optional label-fix step.
 - `artifacts/model_comparison.csv` - compact model-comparison table used by the README and notebook discussion.
+- `EXPERIMENTS.md` - short experiment log with the modeling progression and interpretation.
 - `requirements.txt` - minimal Python dependencies for local or Colab-style execution.
 
 ## Data and Artifacts
